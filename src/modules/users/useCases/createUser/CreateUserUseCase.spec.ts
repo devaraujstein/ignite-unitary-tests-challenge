@@ -2,6 +2,8 @@ import { InMemoryUsersRepository } from '../../repositories/in-memory/InMemoryUs
 import { CreateUserUseCase } from '../createUser/CreateUserUseCase';
 import {CreateUserError} from './CreateUserError';
 
+import isUuid from '../../../../utils/validateUuid';
+
 let inMemoryUsersRepository: InMemoryUsersRepository;
 let createUserUseCase: CreateUserUseCase;
 
@@ -30,18 +32,29 @@ describe("Create User", () => {
   });
 
   it("should not be able to create a new user if email already exists", async () => {
-    expect(async () => {
-      await createUserUseCase.execute({
-        name: "André",
-        email: "teste_andre@gmail.com",
-        password: "12345"
-      });
+    await createUserUseCase.execute({
+      name: "André",
+      email: "teste_andre@gmail.com",
+      password: "12345"
+    });
 
-      await createUserUseCase.execute({
-        name: "André",
-        email: "teste_andre123@gmail.com",
-        password: "12345"
-      });
-    }).rejects.toBeInstanceOf(CreateUserError);
+    await expect(createUserUseCase.execute({
+      name: "André",
+      email: "teste_andre@gmail.com",
+      password: "12345"
+    })).rejects.toBeInstanceOf(CreateUserError);
+  });
+
+  it("should be able to create a valid uuid id", async () => {
+    const user = await createUserUseCase.execute({
+      name: "teste",
+      email: "testando_validacao@gmail.com",
+      password: "12345"
+    });
+
+    const valid_uuid = isUuid(<string>user.id);
+
+    expect(user).toHaveProperty("id");
+    expect(valid_uuid).toBe(true);
   });
 })
